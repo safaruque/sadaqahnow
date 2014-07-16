@@ -11,10 +11,27 @@ function case_entity_info() {
     'base table' => 'cases',
     'entity keys' => array(
       'id' => 'id',
-      'label' => 'name',
+      'label' => 'title',
     ),
     'entity class' => 'Entity',
     'controller class' => 'CaseEntityController',
+
+    'access callback' => 'case_access_callback',
+    'uri callback' => 'entity_class_uri',
+    'admin ui' => array(
+      'path' => 'admin/cases',
+      'controller class' => 'EntityDefaultUIController',
+    ),
+    'fieldable' => TRUE,
+    'bundles' => array(
+      'case' => array(
+        'label' => t('Case'),
+        'admin' => array(
+          'path' => 'admin/cases',
+        ),
+      ),
+    ),
+    'views controller class' => 'EntityDefaultViewsController',
     'module' => 'case',
   );
 
@@ -33,7 +50,38 @@ function case_menu() {
     'access arguments' => array('access content'),
   );
 
+  $items['case/%'] = array(
+    'title' => 'Case',
+    'page callback' => 'case_view_case',
+    'page arguments' => array(1),
+    'access arguments' => array('access content'),
+  );
+
   return $items;
+}
+
+/**
+ * Access callback for case entities.
+ */
+function case_access_callback($op, $case = NULL, $account = NULL) {
+  if ($op == 'view' || $op == 'update' || $op == 'create' || $op == 'delete') {
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+/**
+ * Callback function for displaying the individual case page
+ */
+function case_view_case($id) {
+  $cases = entity_load('case', array($id));
+  $case = $cases[$id];
+
+  drupal_set_title($case->title);
+  $output = entity_view('case', array($case));
+
+  return $output;
 }
 
 /**
@@ -59,6 +107,87 @@ function case_list() {
   }
 
   return implode($output);
+}
+
+/**
+ * Form definition for adding / editing a case.
+ */
+function case_form($form, &$form_state, $case = NULL) {
+  $form['title'] = array(
+    '#title' => t('Case title'),
+    '#type' => 'textfield',
+    '#default_value' => isset($case->title) ? $case->title : '',
+    '#required' => TRUE,
+  );
+
+  $form['description'] = array(
+    '#title' => t('Project description'),
+    '#type' => 'textarea',
+    '#default_value' => isset($case->description) ? $case->description : '',
+    '#required' => TRUE,
+  );
+
+  field_attach_form('case', $case, $form, $form_state);
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => isset($case->id) ? t('Update case') : t('Save case'),
+    '#weight' => 50,
+  );
+
+  return $form;
+}
+
+/**
+ * Submit handler for the case add/edit form.
+ */
+function case_form_submit($form, &$form_state) {
+  $case = entity_ui_form_submit_build_entity($form, $form_state);
+  $case->save();
+  drupal_set_message(t('The case: @title has been saved.', array('@title' => $case->title)));
+  $form_state['redirect'] = 'admin/cases';
+}
+
+/**
+ * Implements hook_entity_property_info().
+ */
+function case_entity_property_info() {
+  $info = array();
+
+  $info['case']['properties']['id'] = array(
+    'label' => t('Case ID'),
+    'description' => t('The ID of the case.'),
+    'type' => 'integer',
+    'schema field' => 'id',
+  );
+
+  $info['case']['properties']['title'] = array(
+    'label' => t('Case title'),
+    'description' => t('Title of the case.'),
+    'type' => 'text',
+    'schema field' => 'title',
+  );
+
+  $info['case']['properties']['description'] = array(
+    'label' => t('Case description'),
+    'description' => t('Description of the case.'),
+    'type' => 'text',
+    'schema field' => 'description',
+  );
+
+  return $info;
+}
+
+/**
+ * Case entity class extending the Entity class
+ */
+class CaseEntity extends Entity {
+  /**
+   * Change the default URI from default/id to case/id
+   */
+  protected function defaultUri() {
+    return array('path' => 'case/' . $this->identifier());
+  }
 }
 
 /**
