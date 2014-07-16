@@ -1,0 +1,37 @@
+<?php
+
+/**
+ * Implements hook_schema().
+ */
+function case_schema() {
+
+  $schema = array();
+
+  $schema['cases'] = array(
+    'description' => 'The base table for the Case entity',
+    'fields' => array(
+      'id' => array(
+        'description' => 'Primary key of the Case entity',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'title' => array(
+        'description' => 'Case title',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+      'description' => array(
+        'description' => 'Project description.',
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => FALSE,
+        'default' => NULL
+      ),
+    ),
+    'primary key' => array('id'),
+  );
+
+  return $schema;
+}

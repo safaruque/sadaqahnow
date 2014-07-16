@@ -1,0 +1,83 @@
+<?php
+
+/**
+ * Implements hook_entity_info().
+ */
+function case_entity_info() {
+  $info = array();
+
+  $info['case'] = array(
+    'label' => t('Case'),
+    'base table' => 'cases',
+    'entity keys' => array(
+      'id' => 'id',
+      'label' => 'name',
+    ),
+    'entity class' => 'Entity',
+    'controller class' => 'CaseEntityController',
+    'module' => 'case',
+  );
+
+  return $info;
+}
+
+/**
+ * Implements hook_menu()
+ */
+function case_menu() {
+  $items = array();
+
+  $items['cases'] = array(
+    'title' => 'Case list',
+    'page callback' => 'case_list',
+    'access arguments' => array('access content'),
+  );
+
+  return $items;
+}
+
+/**
+ * Callback function for our case entities test path
+ */
+function case_list() {
+  // Saving new entities
+  $cases = entity_load('case', array(1));
+
+  if (!isset($cases[1])) {
+    $entity = entity_create('case', array('id' => 1));
+    $entity->title = t('Help needed');
+    $entity->description = t('Please help us help!');
+    $entity->save();
+  }
+
+  // Listing entities
+  $list = entity_view('case', $cases);
+
+  $output = array();
+  foreach ($list['case'] as $case) {
+    $output[] = drupal_render($case);
+  }
+
+  return implode($output);
+}
+
+/**
+ * Extending the EntityAPIController for the Project entity.
+ */
+class CaseEntityController extends EntityAPIController {
+
+  public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
+
+    $build = parent::buildContent($entity, $view_mode, $langcode, $content);
+
+    // Our additions to the $build render array.
+    $build['description'] = array(
+      '#type' => 'markup',
+      '#markup' => check_plain($entity->description),
+      '#prefix' => '<div class="case-description">',
+      '#suffix' => '</div>',
+    );
+
+    return $build;
+  }
+}

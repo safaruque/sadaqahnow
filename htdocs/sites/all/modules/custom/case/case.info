@@ -1,0 +1,4 @@
+name = Case
+description = Case manager
+core = 7.x
+dependencies[] = entity
